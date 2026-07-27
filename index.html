@@ -632,11 +632,16 @@ function riskLabel(p,s){
 var TIER_BENCH = {"Enterprise":19.0,"Growth":21.0,"Long-tail":22.5};
 function action(p,s){
   var g = p.gmv;
-  if(p.exclusivity)
+  if(p.exclusivity && p.name==="Olive & Ash")
     return {type:"Retention", title:"Lock in before the competitor trial matures",
-      ask:"90-day exclusivity across both branches for a 2pt commission reduction plus a funded 4-week visibility package",
-      why:"A competitor trial is already live and the decision-maker has gone quiet. Once they have six clean weeks of data elsewhere, price alone won't win them back.",
+      ask:"90-day exclusivity across both branches for a 2pt commission reduction plus a funded 4-week Marina visibility package — conditional on the staffing fix, not instead of it",
+      why:"A competitor trial is live on the Marina branch and the owner has gone quiet. Once they have six clean weeks of data elsewhere, price alone won't win them back.",
       impact: Math.round(g*0.62), urgency:5};
+  if(p.exclusivity)
+    return {type:"Retention", title:"Reframe the conversation before it becomes a price war",
+      ask:"Guaranteed corporate-lunch daypart placement for a 60-day commitment — match the competitor's onboarding offer in visibility, not in commission",
+      why:"They are comparing commission line by line, which means we are being evaluated on the only axis where we cannot win. Corporate lunch demand hasn't recovered post-summer and that, not our rate, is the actual gap.",
+      impact: Math.round(g*0.55), urgency:5};
   if(p.trend < -15)
     return {type:"Retention", title:"Recovery sprint — diagnose before discounting",
       ask:"Joint two-week ops review, then a co-funded win-back campaign if the root cause is fixed",
@@ -772,8 +777,8 @@ var DATA = PARTNERS.map(function(p){
 
   document.getElementById("briefText").innerHTML=
     "The book is worth <b>"+aed(totalGMV)+"</b> a month across "+DATA.length+" partners, averaging <b>"+avgH+"/100</b> health. "+
-    "<b>"+aed(atRiskGMV)+"</b> ("+Math.round(atRiskGMV/totalGMV*100)+"% of GMV) sits below the 60-point line, concentrated in "+critical.length+" account"+(critical.length===1?"":"s")+" where the risk is displacement rather than performance. "+
-    "The larger and less obvious finding is on the other side: <b>"+lowPromo.length+" healthy accounts</b> are running fewer than six promo days a month, worth roughly <b>"+aed(upsellGMV)+"</b> in monthly upside — more than the at-risk exposure. "+
+    "<b>"+aed(atRiskGMV)+"</b> ("+Math.round(atRiskGMV/totalGMV*100)+"% of GMV) sits below the 60-point line, and "+critical.length+" of those accounts are in the Critical band where the problem is competitive displacement rather than underperformance. "+
+    "The less obvious finding is on the other side of the book: <b>"+upsell.length+" accounts are healthy enough to ask for more</b> — "+lowPromo.length+" of them running fewer than six promo days a month — worth roughly <b>"+aed(upsellGMV)+"</b> a month in identified upside. "+
     "Two patterns cut across individual books and belong to Ops and Marketing, not to any one AM: <b>"+highCancel.length+" partners are above a 7% cancellation rate</b>, all of them peak-hour capacity rather than demand problems; and <b>"+stale.length+" partners have not updated a menu in over 60 days</b>, several still listing items they no longer serve. Neither is visible from a single AM's accounts.";
 
   function kpi(l,v,s,cls){
