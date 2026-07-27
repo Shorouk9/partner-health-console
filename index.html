@@ -171,7 +171,7 @@
   .breakdown div{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:12.5px}
   .breakdown .bl{width:132px;color:var(--ink-2)}
   .breakdown .bb{flex:1;height:6px;background:#eef1f4;border-radius:4px;overflow:hidden}
-  .breakdown .bb i{display:block;height:100%;background:var(--green);border-radius:4px}
+  .breakdown .bb i{display:block;height:100%;border-radius:4px}
   .breakdown .bv{width:48px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
   .narrative{
     background:#f2fbf5;border:1px solid #cfe9d8;border-radius:8px;padding:13px 15px;
@@ -888,7 +888,9 @@ function openDrawer(id){
 
     '<div class="sect"><h5>Score breakdown</h5><div class="breakdown">'+
       parts.map(function(x){
-        return '<div><span class="bl">'+x[0]+'</span><span class="bb"><i style="width:'+(x[1]/x[2]*100)+'%"></i></span><span class="bv">'+x[1].toFixed(1)+' / '+x[2]+'</span></div>';
+        var r=x[1]/x[2];
+        var bc = r>=0.75?"#28a745": r>=0.5?"#e8a317": r>=0.3?"#e07b39":"#d9534f";
+        return '<div><span class="bl">'+x[0]+'</span><span class="bb"><i style="width:'+(r*100)+'%;background:'+bc+'"></i></span><span class="bv">'+x[1].toFixed(1)+' / '+x[2]+'</span></div>';
       }).join("")+
     '</div></div>'+
 
