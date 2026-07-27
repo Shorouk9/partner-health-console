@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Partner Health Console — AI Account Insights for Food Delivery</title>
+<style>
+  :root{
+    --green:#28a745;
+    --green-d:#1e7e34;
+    --ink:#101820;
+    --ink-2:#2c3742;
+    --muted:#6b7885;
+    --line:#e3e8ed;
+    --bg:#f5f7f9;
+    --card:#ffffff;
+    --amber:#e8a317;
+    --red:#d9534f;
+    --blue:#2f6fb0;
+    --radius:10px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  }
+  header.top{
+    background:var(--ink);color:#fff;padding:16px 24px;
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  }
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{
+    width:34px;height:34px;border-radius:9px;background:var(--green);
+    display:grid;place-items:center;font-weight:800;font-size:15px;color:#fff;
+  }
+  .brand h1{font-size:16px;margin:0;font-weight:650;letter-spacing:-.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:#9aa7b4}
+  .top-right{font-size:11.5px;color:#9aa7b4;text-align:right}
+  .top-right b{color:#fff;font-weight:600}
+
+  .demo-strip{
+    background:#fff8e6;border-bottom:1px solid #f0e0b8;color:#7a5c10;
+    padding:7px 24px;font-size:11.5px;
+  }
+
+  nav.tabs{
+    background:#fff;border-bottom:1px solid var(--line);padding:0 24px;
+    display:flex;gap:4px;overflow-x:auto;
+  }
+  nav.tabs button{
+    background:none;border:0;border-bottom:2px solid transparent;
+    padding:13px 14px;font-size:13.5px;color:var(--muted);cursor:pointer;
+    font-family:inherit;white-space:nowrap;font-weight:500;
+  }
+  nav.tabs button:hover{color:var(--ink)}
+  nav.tabs button.on{color:var(--ink);border-bottom-color:var(--green);font-weight:600}
+
+  main{padding:22px 24px 60px;max-width:1420px;margin:0 auto}
+  .panel{display:none}
+  .panel.on{display:block}
+
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:16px}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .kpi .lab{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+  .kpi .val{font-size:24px;font-weight:700;margin-top:5px;letter-spacing:-.5px}
+  .kpi .sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .kpi.alert .val{color:var(--red)}
+  .kpi.good .val{color:var(--green-d)}
+
+  .brief{
+    background:linear-gradient(180deg,#f2fbf5,#fff);border:1px solid #cfe9d8;
+    border-left:3px solid var(--green);border-radius:var(--radius);
+    padding:15px 18px;margin-bottom:16px;
+  }
+  .brief h3{margin:0 0 7px;font-size:12px;text-transform:uppercase;letter-spacing:.07em;color:var(--green-d)}
+  .brief p{margin:0;font-size:13.5px;color:var(--ink-2);max-width:110ch}
+  .brief .tagline{font-size:11px;color:var(--muted);margin-top:9px;font-style:italic}
+
+  .toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+  .toolbar input,.toolbar select{
+    font-family:inherit;font-size:13px;padding:8px 10px;
+    border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);
+  }
+  .toolbar input{min-width:210px}
+  .toolbar .count{margin-left:auto;font-size:12px;color:var(--muted)}
+
+  .tablewrap{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{
+    text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;
+    color:var(--muted);padding:11px 12px;background:#fafbfc;border-bottom:1px solid var(--line);
+    font-weight:700;white-space:nowrap;cursor:pointer;user-select:none;
+  }
+  th:hover{color:var(--ink)}
+  th.sorted{color:var(--ink)}
+  td{padding:11px 12px;border-bottom:1px solid #f0f3f5;vertical-align:middle;font-size:13px}
+  tbody tr{cursor:pointer}
+  tbody tr:hover{background:#f7fbf8}
+  .pname{font-weight:600}
+  .pmeta{font-size:11px;color:var(--muted);margin-top:1px}
+
+  .scorecell{display:flex;align-items:center;gap:8px;min-width:112px}
+  .bar{flex:1;height:6px;background:#eef1f4;border-radius:4px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:4px}
+  .scorenum{font-weight:700;font-size:13px;width:22px;text-align:right}
+
+  .pill{
+    display:inline-block;padding:2.5px 8px;border-radius:20px;
+    font-size:10.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap;
+  }
+  .p-healthy{background:#e4f6ea;color:#1e7e34}
+  .p-watch{background:#fdf3dd;color:#8a6410}
+  .p-risk{background:#fde9e2;color:#b5541f}
+  .p-critical{background:#fbe2e1;color:#a92a26}
+  .p-upsell{background:#e6f0fa;color:#1f5b96}
+  .p-retention{background:#fbe2e1;color:#a92a26}
+  .p-growth{background:#eae7fb;color:#5540a8}
+  .p-tier{background:#eef1f4;color:#4a5560}
+
+  .delta{font-weight:600;font-size:12.5px}
+  .up{color:var(--green-d)} .down{color:var(--red)} .flat{color:var(--muted)}
+
+  .actioncell{max-width:260px}
+  .actioncell .t{font-weight:600;font-size:12.5px;line-height:1.3}
+  .actioncell .i{font-size:11px;color:var(--muted);margin-top:2px}
+
+  /* queue */
+  .qcard{
+    background:var(--card);border:1px solid var(--line);border-left:3px solid var(--muted);
+    border-radius:var(--radius);padding:15px 17px;margin-bottom:11px;
+  }
+  .qcard.Retention{border-left-color:var(--red)}
+  .qcard.Upsell{border-left-color:var(--blue)}
+  .qcard.Growth{border-left-color:#6b57c9}
+  .qhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+  .qhead h4{margin:0;font-size:15px;font-weight:650}
+  .qhead .rank{
+    display:inline-grid;place-items:center;width:21px;height:21px;border-radius:6px;
+    background:var(--ink);color:#fff;font-size:11px;font-weight:700;margin-right:8px;
+  }
+  .qbody{margin-top:9px;font-size:13px;color:var(--ink-2)}
+  .qwhy{margin-top:7px;font-size:12.5px;color:var(--muted)}
+  .qimpact{font-size:12px;font-weight:700;color:var(--green-d);white-space:nowrap}
+
+  /* drawer */
+  .scrim{
+    position:fixed;inset:0;background:rgba(16,24,32,.42);display:none;z-index:40;
+  }
+  .scrim.on{display:block}
+  .drawer{
+    position:fixed;top:0;right:0;height:100%;width:min(560px,100%);background:#fff;
+    z-index:50;transform:translateX(100%);transition:transform .22s ease;
+    display:flex;flex-direction:column;box-shadow:-8px 0 30px rgba(0,0,0,.14);
+  }
+  .drawer.on{transform:translateX(0)}
+  .dhead{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .dhead h2{margin:0;font-size:19px;letter-spacing:-.3px}
+  .dhead .sub{font-size:12px;color:var(--muted);margin-top:3px}
+  .dclose{background:none;border:0;font-size:24px;line-height:1;cursor:pointer;color:var(--muted);padding:0 2px}
+  .dbody{padding:18px 22px 40px;overflow-y:auto}
+  .sect{margin-bottom:22px}
+  .sect h5{
+    margin:0 0 9px;font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);font-weight:700;
+  }
+  .metricgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .m{background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+  .m .l{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .m .v{font-size:15px;font-weight:700;margin-top:2px}
+  .breakdown div{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:12.5px}
+  .breakdown .bl{width:132px;color:var(--ink-2)}
+  .breakdown .bb{flex:1;height:6px;background:#eef1f4;border-radius:4px;overflow:hidden}
+  .breakdown .bb i{display:block;height:100%;background:var(--green);border-radius:4px}
+  .breakdown .bv{width:48px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums}
+  .narrative{
+    background:#f2fbf5;border:1px solid #cfe9d8;border-radius:8px;padding:13px 15px;
+    font-size:13px;color:var(--ink-2);
+  }
+  .signal{
+    display:flex;gap:8px;font-size:12.5px;padding:6px 0;border-bottom:1px dashed #eef1f4;color:var(--ink-2);
+  }
+  .signal:last-child{border-bottom:0}
+  .signal .dot{width:7px;height:7px;border-radius:50%;margin-top:6px;flex:0 0 auto}
+  .msgbox{
+    background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:13px 15px;
+    font-size:12.5px;white-space:pre-wrap;color:var(--ink-2);font-family:inherit;
+  }
+  .copybtn{
+    margin-top:8px;background:var(--ink);color:#fff;border:0;border-radius:7px;
+    padding:7px 13px;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600;
+  }
+  .copybtn:hover{background:var(--ink-2)}
+
+  /* prompt tab */
+  .promptcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:20px 22px;margin-bottom:16px}
+  .promptcard h3{margin:0 0 4px;font-size:16px}
+  .promptcard .cap{font-size:12.5px;color:var(--muted);margin:0 0 14px;max-width:90ch}
+  pre.prompt{
+    background:#101820;color:#dfe6ec;border-radius:8px;padding:17px 19px;overflow-x:auto;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;line-height:1.6;
+    white-space:pre-wrap;margin:0;
+  }
+  pre.prompt .c{color:#7f9ab0}
+  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .io{background:#fafbfc;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:12.5px}
+  .io h6{margin:0 0 7px;font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
+  .io pre{margin:0;white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--ink-2);line-height:1.55}
+
+  .method{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;max-width:96ch}
+  .method h3{margin:0 0 12px;font-size:17px}
+  .method h4{margin:22px 0 7px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  .method p,.method li{font-size:13.5px;color:var(--ink-2)}
+  .method ul{padding-left:19px;margin:7px 0}
+  .method li{margin-bottom:5px}
+  .wtable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  .wtable th{background:#fafbfc;cursor:default}
+  .wtable td{padding:8px 11px}
+
+  footer{padding:22px 24px;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line);background:#fff}
+
+  @media(max-width:820px){
+    .twocol{grid-template-columns:1fr}
+    .metricgrid{grid-template-columns:repeat(2,1fr)}
+    .hide-sm{display:none}
+    main{padding:16px 14px 50px}
+    header.top,nav.tabs,.demo-strip,footer{padding-left:14px;padding-right:14px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="logo">PH</div>
+    <div>
+      <h1>Partner Health Console</h1>
+      <p>AI-assisted account insights — Food vertical, UAE</p>
+    </div>
+  </div>
+  <div class="top-right">
+    <div>Portfolio: <b>UAE Food — Restaurant Partnerships</b></div>
+    <div>Data as of <b id="asof"></b> · Refreshed weekly</div>
+  </div>
+</header>
+
+<div class="demo-strip">
+  <b>Prototype / synthetic data.</b> All partner names, figures and notes below are invented for this exercise. No confidential or proprietary information is used.
+</div>
+
+<nav class="tabs">
+  <button class="on" data-tab="portfolio">Portfolio</button>
+  <button data-tab="queue">This Week's Actions</button>
+  <button data-tab="prompt">Prompt Library</button>
+  <button data-tab="method">How It Works</button>
+</nav>
+
+<main>
+
+  <!-- PORTFOLIO -->
+  <section class="panel on" id="portfolio">
+    <div class="kpis" id="kpis"></div>
+    <div class="brief">
+      <h3>AI Portfolio Brief</h3>
+      <p id="briefText"></p>
+      <div class="tagline">Generated from the 18 partner records below using the scoring model and prompt in the "Prompt Library" tab.</div>
+    </div>
+
+    <div class="toolbar">
+      <input type="search" id="q" placeholder="Search partner, cuisine or area…" />
+      <select id="fTier"><option value="">All tiers</option><option>Enterprise</option><option>Growth</option><option>Long-tail</option></select>
+      <select id="fBand"><option value="">All health bands</option><option>Healthy</option><option>Watch</option><option>At Risk</option><option>Critical</option></select>
+      <select id="fAction"><option value="">All action types</option><option>Retention</option><option>Upsell</option><option>Growth</option></select>
+      <span class="count" id="count"></span>
+    </div>
+
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr>
+            <th data-sort="name">Partner</th>
+            <th data-sort="tier" class="hide-sm">Tier</th>
+            <th data-sort="gmv">Monthly GMV</th>
+            <th data-sort="trend">4-wk Trend</th>
+            <th class="hide-sm">12-wk</th>
+            <th data-sort="health" class="sorted">Health</th>
+            <th data-sort="risk">Churn Risk</th>
+            <th data-sort="impact">Recommended Next Action</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- QUEUE -->
+  <section class="panel" id="queue">
+    <div class="brief">
+      <h3>Priority Queue — week of <span id="weekOf"></span></h3>
+      <p>Ranked by <b>value at stake × urgency</b>, not by health score alone. A healthy AED 180k partner with an untapped upsell can outrank a struggling AED 12k partner. Each card is one owner, one action, one week.</p>
+    </div>
+    <div id="queueList"></div>
+  </section>
+
+  <!-- PROMPT -->
+  <section class="panel" id="prompt">
+    <div class="promptcard">
+      <h3>Prompt 1 — Account Summary &amp; Next Step</h3>
+      <p class="cap">The core reusable prompt. An Account Manager pastes raw, messy call notes and the last few weeks of numbers; the model returns a structured health read and one concrete next step. Built to refuse guessing when data is missing — the failure mode that kills trust in a tool like this.</p>
+      <pre class="prompt"><span class="c">ROLE</span>
+You are a senior Account Manager for a food-delivery marketplace in the UAE.
+You have run restaurant partnerships for years. You are commercially direct,
+never flattering, and you never invent numbers.
+
+<span class="c">TASK</span>
+Read the PARTNER RECORD below and return a health read and one next action.
+
+<span class="c">SCORING RUBRIC (total 100)</span>
+Order-volume trend, last 4 wks vs prior 4 wks .......... 25
+Operational reliability (cancellations, prep-time SLA) . 20
+Customer rating and its direction ...................... 15
+Basket-size trend ...................................... 10
+Menu freshness (days since last meaningful update) ..... 10
+Marketing participation (promo days in last 30) ........ 10
+Relationship recency (days since last substantive contact) 10
+
+Bands: 80-100 Healthy | 60-79 Watch | 40-59 At Risk | 0-39 Critical
+
+<span class="c">RULES</span>
+1. Score each component separately and show the number. Do not score
+   holistically then reverse-engineer the parts.
+2. If a field is missing, assign the component a null, exclude its weight
+   from the denominator, and list the field under "data_gaps".
+   Never impute a value to make the score look complete.
+3. Quote a specific figure or a phrase from the notes as evidence for every
+   signal you raise. No evidence, no signal.
+4. Distinguish a real trend from normal noise. Ramadan, Eid, school holidays,
+   DSF and summer travel move UAE food volumes materially — if the timing
+   fits a known seasonal pattern, say so instead of calling it churn.
+5. Exactly ONE recommended action. It must be something the AM can start
+   this week, name the counterpart, and state the commercial ask.
+6. If the honest read is "no action needed, keep monitoring", say that.
+   Manufacturing an action to look useful is worse than saying nothing.
+
+<span class="c">OUTPUT — JSON only, no prose around it</span>
+{
+  "partner": "",
+  "health_score": 0,
+  "band": "",
+  "component_scores": { "volume_trend":0, "ops_reliability":0, "rating":0,
+                        "basket":0, "menu_freshness":0, "marketing":0,
+                        "relationship":0 },
+  "churn_risk": "low | medium | high | critical",
+  "top_signals": [ { "signal":"", "evidence":"", "direction":"positive|negative" } ],
+  "data_gaps": [ "" ],
+  "recommended_action": {
+     "type": "Retention | Upsell | Growth | Monitor",
+     "action": "",
+     "commercial_ask": "",
+     "owner_should_contact": "",
+     "expected_impact_aed_per_month": 0,
+     "confidence": "low | medium | high",
+     "why_now": ""
+  },
+  "draft_message": "≤80 words, WhatsApp tone, no corporate filler,
+                    references one specific number from the record"
+}
+
+<span class="c">PARTNER RECORD</span>
+{{paste weekly GMV, orders, AOV, cancellation %, rating, menu update date,
+promo days, last contact date, and raw call notes}}</pre>
+    </div>
+
+    <div class="promptcard">
+      <h3>Worked example</h3>
+      <p class="cap">Same prompt, run against one record from the portfolio. Click any row in the Portfolio tab to see this output rendered for every partner.</p>
+      <div class="twocol">
+        <div class="io">
+          <h6>Input — raw AM notes</h6>
+          <pre>Olive &amp; Ash — Mediterranean, Dubai Marina, Enterprise tier.
+Weekly GMV last 8: 61k, 59k, 57k, 52k, 49k, 44k, 41k, 38k
+Orders/wk 690 → 452. AOV AED 84 (was 88).
+Cancellation rate 9.4%. Rating 4.1, was 4.5 in March.
+Menu last updated 96 days ago. Promo days last 30: 2.
+Last substantive contact: 47 days ago.
+
+Call notes 12 Jun: Spoke to Rania (ops manager, not the owner).
+Kitchen short-staffed since two chefs left. She said they are
+"testing another platform for the Marina branch" and asked what
+we can do on commission. Owner Faisal has not replied to my last
+two emails. They opened a second branch in JBR in May.</pre>
+        </div>
+        <div class="io">
+          <h6>Output — model response</h6>
+          <pre>{
+  "partner": "Olive &amp; Ash",
+  "health_score": 38,
+  "band": "Critical",
+  "component_scores": { "volume_trend":3, "ops_reliability":7,
+    "rating":4, "basket":4, "menu_freshness":2,
+    "marketing":1, "relationship":3 },
+  "churn_risk": "critical",
+  "top_signals": [
+    { "signal":"Sustained 8-week volume decline, not seasonal",
+      "evidence":"61k → 38k weekly GMV, -38%; decline began
+                  pre-summer and is linear, not a step drop",
+      "direction":"negative" },
+    { "signal":"Competitor displacement in progress",
+      "evidence":"'testing another platform for the Marina branch'",
+      "direction":"negative" },
+    { "signal":"Service quality is the likely root cause",
+      "evidence":"cancellation 9.4%, rating 4.5 → 4.1, two chefs
+                  left — decline follows the staffing gap",
+      "direction":"negative" },
+    { "signal":"Decision-maker has gone quiet",
+      "evidence":"owner Faisal unresponsive to two emails;
+                  47 days since substantive contact",
+      "direction":"negative" }
+  ],
+  "data_gaps": ["No contract renewal date","No JBR branch
+                 performance — may be cannibalising Marina"],
+  "recommended_action": {
+    "type": "Retention",
+    "action": "Escalate to owner directly. Lead with the ops fix,
+               not the discount — commission is the symptom
+               they are naming, staffing is the actual problem.",
+    "commercial_ask": "90-day exclusivity on both branches in
+               exchange for a 2pt commission reduction plus
+               a funded 4-week Marina visibility package",
+    "owner_should_contact": "Faisal (owner) — in person,
+               not email; Rania cannot sign this",
+    "expected_impact_aed_per_month": 152000,
+    "confidence": "medium",
+    "why_now": "Competitor trial is live. Once the Marina branch
+               has 6-8 weeks of clean data elsewhere, price
+               alone will not win it back."
+  },
+  "draft_message": "Faisal — I've been looking at Marina and I
+    don't think this is a commission problem. You're at 9.4%
+    cancellations since the kitchen changes, and that's what
+    dropped you from 4.5 to 4.1. I'd rather fix that than
+    discount you. Can I come by Tuesday? I'll bring a plan
+    for both branches."
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="promptcard">
+      <h3>Prompt 2 — Weekly portfolio triage</h3>
+      <p class="cap">Run once a week across the whole book. Turns 40 individual reads into a ranked list of five things a team of AMs should actually do — which is the part that saves a Team Lead time.</p>
+      <pre class="prompt"><span class="c">ROLE</span>
+You are the Team Lead for restaurant partnerships. You have five Account
+Managers and roughly 40 accounts each. You cannot action everything.
+
+<span class="c">TASK</span>
+Given the health outputs for every partner, return the FIVE actions the
+team should take this week.
+
+<span class="c">RANKING LOGIC</span>
+Rank by (value at stake × urgency × win probability) — NOT by lowest
+health score. Explicit consequences:
+  · A Healthy AED 180k partner with 2 promo days outranks a Critical
+    AED 12k partner. The upside is bigger and the win is likelier.
+  · An account already 90% lost is deprioritised. Say so plainly and
+    say what the team should stop doing on it.
+  · Two accounts with the same root cause become ONE action.
+
+<span class="c">FOR EACH OF THE FIVE, RETURN</span>
+· Partner and the AED at stake per month
+· The single action, and who on the team should own it
+· What we stop doing to make room for it
+· The one number that tells us in 2 weeks whether it worked
+
+<span class="c">THEN</span>
+State the one pattern across the portfolio a Team Lead should escalate
+to Ops, Marketing or Product — something no individual AM would see
+from their own book alone.</pre>
+    </div>
+  </section>
+
+  <!-- METHOD -->
+  <section class="panel" id="method">
+    <div class="method">
+      <h3>How it works</h3>
+      <p>Two layers, deliberately separated.</p>
+
+      <h4>Layer 1 — Deterministic scoring</h4>
+      <p>The health score is calculated in code, not by a language model. The same partner data always produces the same score, the maths is auditable, and an AM can see exactly which component cost them points. Language models are bad at consistent arithmetic and worse at defending a number to a partner in a meeting — so they don't do this part.</p>
+      <table class="wtable">
+        <thead><tr><th>Component</th><th>Weight</th><th>Why it earns that weight</th></tr></thead>
+        <tbody>
+          <tr><td>Order-volume trend</td><td>25</td><td>The earliest and least ambiguous churn signal.</td></tr>
+          <tr><td>Operational reliability</td><td>20</td><td>Cancellations and prep-time misses drive both customer loss and partner frustration.</td></tr>
+          <tr><td>Customer rating</td><td>15</td><td>Lags volume, but explains it — tells you whether a decline is fixable.</td></tr>
+          <tr><td>Basket size trend</td><td>10</td><td>Separates "fewer customers" from "same customers spending less" — different fixes.</td></tr>
+          <tr><td>Menu freshness</td><td>10</td><td>A stale menu is the cheapest growth lever in the book and a reliable proxy for partner engagement.</td></tr>
+          <tr><td>Marketing participation</td><td>10</td><td>Low participation on a healthy account is unbooked revenue, not a problem.</td></tr>
+          <tr><td>Relationship recency</td><td>10</td><td>Accounts are lost in the silence between conversations.</td></tr>
+        </tbody>
+      </table>
+
+      <h4>Layer 2 — The language model</h4>
+      <p>The model does the three things it is genuinely better at than a rules engine:</p>
+      <ul>
+        <li><b>Reading unstructured notes.</b> "She mentioned they're trialling someone else for Marina" is the most important fact in the account and it lives in a call note, not a dashboard field.</li>
+        <li><b>Explaining the score in commercial language</b> an AM can take into a meeting.</li>
+        <li><b>Drafting the outreach</b> in the partner's context, referencing a real number.</li>
+      </ul>
+
+      <h4>Design decisions worth defending</h4>
+      <ul>
+        <li><b>One action per partner, per week.</b> A dashboard that surfaces nine opportunities produces zero. The constraint is the product.</li>
+        <li><b>Ranked by value at stake, not by lowest score.</b> Sorting by health score sends the team to chase the smallest, most-lost accounts first. This is the mistake most account dashboards make.</li>
+        <li><b>The model must say "no action needed".</b> A tool that always finds something to do trains AMs to ignore it within a month.</li>
+        <li><b>Seasonality is named explicitly.</b> In this market, Ramadan, Eid, DSF and the summer exodus move volumes enough to fake a churn signal. A model that flags every Ramadan dip as churn gets switched off in April.</li>
+        <li><b>Missing data stays missing.</b> The score's denominator shrinks rather than the model imputing a number. An AM who catches the tool inventing one figure will never trust the other twelve.</li>
+      </ul>
+
+      <h4>What this is not</h4>
+      <p>This is a 60-minute prototype on synthetic data. A real build would need: a trained churn model validated against actual historical churn rather than a hand-weighted rubric, back-testing on at least four quarters, an honest false-positive rate, and a feedback loop capturing which recommendations AMs acted on and which they ignored — that last one being the only thing that makes the weights better over time.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  Prototype built for an application exercise. Synthetic data — no confidential or proprietary information. Single self-contained HTML file, no dependencies, no tracking.
+</footer>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer">
+  <div class="dhead">
+    <div>
+      <h2 id="dName"></h2>
+      <div class="sub" id="dSub"></div>
+    </div>
+    <button class="dclose" id="dClose" aria-label="Close">×</button>
+  </div>
+  <div class="dbody" id="dBody"></div>
+</aside>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------- deterministic pseudo-random (so the demo is stable) ---------- */
+function rng(seed){
+  let s = seed % 2147483647; if (s <= 0) s += 2147483646;
+  return function(){ s = s * 16807 % 2147483647; return (s - 1) / 2147483646; };
+}
+
+/* ---------- partner base records (all fictional) ---------- */
+var BASE = [
+ // name, cuisine, area, emirate, tier, weeklyGMVstart, trendPct(12wk), orders/wk, aov, aovDelta%, commission%, cancel%, prepAdh%, rating, ratingDelta, menuDays, promoDays, contactDays, exclusivityRisk, note
+ ["Zaytoun Kitchen","Levantine","Jumeirah","Dubai","Enterprise",78000,  22, 690, 96,  4.0, 18.0, 2.1, 94, 4.7,  0.1,  22, 3,  11, false,"Owner Nadia is ambitious, opening a third branch in Q4. Barely uses promos — says 'my food sells itself'. Repeatedly asks about better placement."],
+ ["Sushi Sandbox","Japanese","Downtown","Dubai","Enterprise",64000,     16, 402,142,  6.0, 19.5, 1.8, 96, 4.8,  0.0,  34, 1,   9, false,"Premium AOV, very low promo participation. Marketing lead Yuki is interested in a sponsored slot but wants a media plan first."],
+ ["Olive & Ash","Mediterranean","Dubai Marina","Dubai","Enterprise",61000,-38, 452, 84, -4.5, 17.5, 9.4, 71, 4.1, -0.4,  96, 2,  47, true, "Two chefs left in May. Ops manager Rania mentioned they are testing another platform for the Marina branch and asked about commission. Owner Faisal not replying. New JBR branch opened May."],
+ ["Tandoor Twelve","Indian","Khalifa City","Abu Dhabi","Enterprise",57000, 2, 620, 74,  0.5, 18.5, 3.4, 90, 4.5,  0.0,  71, 9,  26, false,"Large, stable, slightly complacent. Menu hasn't changed since January. Procurement-style relationship, low warmth, but reliable."],
+ ["Mangrove Grill","Seafood","Corniche","Abu Dhabi","Enterprise",49000,  -6, 318,118, -2.0, 19.0, 4.2, 88, 4.4, -0.1, 104, 4,  38, false,"Menu badly out of date, still lists three items they no longer serve — generating cancellations. Owner is receptive but slow."],
+ ["Saffron Street","Indian","Al Barsha","Dubai","Growth",34000,          29, 512, 58,  3.0, 20.0, 2.6, 93, 4.6,  0.2,  18,14,  13, false,"Fastest riser in the book. Very responsive on WhatsApp. Already running two promos a month and asking for a third."],
+ ["Shawarma Republic","Levantine","Al Majaz","Sharjah","Growth",31000,   24, 880, 32,  1.0, 21.0,11.2, 68, 4.2, -0.2,  41,11,  19, false,"Volume growing fast but the kitchen can't keep up — cancellations are climbing in lockstep. Peak-hour capacity problem, not a demand problem."],
+ ["Wok District","Chinese","Silicon Oasis","Dubai","Growth",27000,      -21, 386, 62, -3.0, 20.5, 7.8, 74, 3.9, -0.5,  63, 5,  34, false,"Rating fell below 4.0 in June. Multiple reviews mention cold food. New delivery packaging may be the cause."],
+ ["Grill Yard","American","Motor City","Dubai","Growth",24000,          -17, 268, 82, -1.5, 20.0, 5.1, 83, 4.3, -0.2,  58, 3,  41, false,"Went quiet after we declined a co-funded campaign in April. Relationship needs repair before any commercial ask."],
+ ["Chapati House","Pakistani","Al Quoz","Dubai","Growth",22000,           4, 604, 34,  0.0, 21.5, 3.0, 91, 4.5,  0.1,  46, 8,  22, false,"Steady blue-collar catchment, very consistent. Owner Imran is easy to work with and open to a lunch bundle."],
+ ["Cedar Table","Lebanese","Al Ain","Al Ain","Growth",19000,             -3, 246, 71, -0.5, 20.0, 4.6, 86, 4.4,  0.0,  77, 6,  29, false,"Flat for two quarters. Limited catchment. Realistic ceiling unless they add a second location."],
+ ["Pho Lantern","Vietnamese","JLT","Dubai","Long-tail",14000,           -12, 198, 66, -2.0, 22.0, 6.3, 80, 4.3, -0.1,  88, 2,  52, false,"Slow decline since a competitor Vietnamese opened two streets away. Owner is aware and a bit demoralised."],
+ ["Barbari Bakehouse","Bakery","JLT","Dubai","Long-tail",12500,          31, 430, 27,  5.0, 22.0, 2.0, 95, 4.7,  0.3,  25,10,  16, false,"Breakfast-led, growing quickly off a small base. Strong candidate for a morning-daypart push."],
+ ["Nasi & Co","Indonesian","Al Nahda","Dubai","Long-tail",11000,         42, 260, 38,  2.5, 22.0, 3.8, 89, 4.6,  0.2,  15, 7,  20, false,"Onboarded 4 months ago, compounding fast. Underinvested by us relative to its growth rate."],
+ ["Machboos House","Emirati","Al Nakheel","Ras Al Khaimah","Long-tail",9500, 18, 172, 49, 1.5, 21.0, 4.0, 87, 4.5, 0.1, 39, 5, 31, false,"Only strong Emirati option in its catchment. Weekend-heavy. Untapped Friday family-bundle opportunity."],
+ ["Falafel Lane","Street food","Al Karama","Dubai","Long-tail",9000,      7, 720, 16,  0.5, 22.5, 3.2, 92, 4.6,  0.0,  52, 4,  24, false,"Enormous order count, tiny basket. Margin per order is marginal. Combo engineering is the whole opportunity here."],
+ ["Karak & Co","Cafe","Deira","Dubai","Long-tail",7500,                  -8, 540, 13, -1.0, 22.5, 5.5, 84, 4.2, -0.1,  67, 1,  58, false,"Beverage-led, very low ticket. Hasn't been contacted in nearly two months. Low priority but slipping."],
+ ["Bento Bay","Japanese","Business Bay","Dubai","Growth",21000,         -26, 214, 92, -5.5, 20.5, 8.6, 76, 4.0, -0.4,  81, 2,  44, true, "Corporate-lunch dependent and hasn't recovered post-summer. Mentioned a competitor's onboarding offer. Owner is comparing commission line by line."]
+];
+
+/* ---------- build full records ---------- */
+var R = rng(20260728);
+var PARTNERS = BASE.map(function(b,i){
+  var start=b[5], trend=b[6];
+  var series=[], v=start;
+  var perWeek = Math.pow(1+trend/100, 1/11);
+  for(var w=0; w<12; w++){
+    var noise = 1 + (R()-0.5)*0.07;
+    series.push(Math.round(start*Math.pow(perWeek,w)*noise));
+  }
+  var last4 = series.slice(8).reduce(function(a,c){return a+c},0);
+  var prev4 = series.slice(4,8).reduce(function(a,c){return a+c},0);
+  var trend4 = (last4/prev4 - 1)*100;
+  var monthlyGMV = Math.round(last4);
+  return {
+    id:i, name:b[0], cuisine:b[1], area:b[2], emirate:b[3], tier:b[4],
+    series:series, gmv:monthlyGMV, trend:trend4,
+    orders:b[7], aov:b[8], aovDelta:b[9], commission:b[10],
+    cancel:b[11], prep:b[12], rating:b[13], ratingDelta:b[14],
+    menuDays:b[15], promoDays:b[16], contactDays:b[17],
+    exclusivity:b[18], note:b[19]
+  };
+});
+
+/* ---------- scoring ---------- */
+function lin(x,lo,hi,max){ // lo -> 0, hi -> max
+  if(hi===lo) return max;
+  var t=(x-lo)/(hi-lo); return Math.max(0,Math.min(1,t))*max;
+}
+function score(p){
+  var c={};
+  c.volume   = lin(p.trend, -25, 20, 25);
+  var cancelPts = lin(p.cancel, 12, 1.5, 12);
+  var prepPts   = lin(p.prep, 60, 97, 8);
+  c.ops      = cancelPts + prepPts;
+  c.rating   = lin(p.rating, 3.8, 4.8, 12) + lin(p.ratingDelta, -0.5, 0.25, 3);
+  c.basket   = lin(p.aovDelta, -6, 5, 10);
+  c.menu     = lin(p.menuDays, 120, 25, 10);
+  c.marketing= lin(p.promoDays, 0, 12, 10);
+  c.relation = lin(p.contactDays, 90, 12, 10);
+  var total = c.volume+c.ops+c.rating+c.basket+c.menu+c.marketing+c.relation;
+  return {parts:c, total:Math.round(total)};
+}
+function band(s){ return s>=80?"Healthy": s>=60?"Watch": s>=40?"At Risk":"Critical"; }
+function bandColor(s){ return s>=80?"#28a745": s>=60?"#e8a317": s>=40?"#e07b39":"#d9534f"; }
+function riskLabel(p,s){
+  var r = 100 - s;
+  if(p.trend < -12) r += 14;
+  if(p.exclusivity) r += 12;
+  if(p.contactDays > 45) r += 5;
+  r = Math.max(3, Math.min(96, Math.round(r)));
+  var lab = r>=65?"Critical": r>=45?"High": r>=25?"Medium":"Low";
+  return {pct:r, label:lab};
+}
+
+/* ---------- action engine ---------- */
+var TIER_BENCH = {"Enterprise":19.0,"Growth":21.0,"Long-tail":22.5};
+function action(p,s){
+  var g = p.gmv;
+  if(p.exclusivity)
+    return {type:"Retention", title:"Lock in before the competitor trial matures",
+      ask:"90-day exclusivity across both branches for a 2pt commission reduction plus a funded 4-week visibility package",
+      why:"A competitor trial is already live and the decision-maker has gone quiet. Once they have six clean weeks of data elsewhere, price alone won't win them back.",
+      impact: Math.round(g*0.62), urgency:5};
+  if(p.trend < -15)
+    return {type:"Retention", title:"Recovery sprint — diagnose before discounting",
+      ask:"Joint two-week ops review, then a co-funded win-back campaign if the root cause is fixed",
+      why:"Volume is down "+p.trend.toFixed(0)+"% over four weeks. Discounting a broken operation just buys unhappy orders.",
+      impact: Math.round(g*0.45), urgency:5};
+  if(p.cancel > 8)
+    return {type:"Retention", title:"Peak-hour capacity fix",
+      ask:"Agree a capped order-throttle at peak plus revised prep times — protect the rating, then reopen the taps",
+      why:"Cancellation rate is "+p.cancel.toFixed(1)+"%. Every cancelled order costs the customer twice: they don't eat, and they don't come back.",
+      impact: Math.round(g*0.28), urgency:4};
+  if(p.rating < 4.2)
+    return {type:"Retention", title:"Quality intervention on the rating slide",
+      ask:"Review the last 100 reviews together and fix the top complaint before any marketing spend",
+      why:"Rating at "+p.rating.toFixed(1)+" and falling. Below 4.0 the listing loses conversion faster than any promo can replace.",
+      impact: Math.round(g*0.32), urgency:4};
+  if(s >= 72 && p.promoDays < 6)
+    return {type:"Upsell", title:"Sponsored placement + committed promo calendar",
+      ask:"Six promo days a month and a four-week sponsored listing, co-funded 50/50",
+      why:"Healthy account running only "+p.promoDays+" promo days a month. This is unbooked revenue, not a problem to solve.",
+      impact: Math.round(g*0.18), urgency:3};
+  if(s >= 72 && p.commission < TIER_BENCH[p.tier])
+    return {type:"Upsell", title:"Commission alignment tied to visibility",
+      ask:"Move to "+TIER_BENCH[p.tier].toFixed(1)+"% in exchange for guaranteed category placement and a funded launch push",
+      why:"At "+p.commission.toFixed(1)+"% they sit below the "+p.tier+" benchmark while growing "+p.trend.toFixed(0)+"%. Trade the rate for something they actually want.",
+      impact: Math.round(g*((TIER_BENCH[p.tier]-p.commission)/100)*12), urgency:3};
+  if(p.menuDays > 60)
+    return {type:"Growth", title:"Menu refresh and photography",
+      ask:"Book the free shoot slot and remove the discontinued items driving cancellations",
+      why:"Menu untouched for "+p.menuDays+" days. Cheapest lever in the book and it removes a live cancellation cause.",
+      impact: Math.round(g*0.11), urgency:2};
+  if(p.aov < 40)
+    return {type:"Growth", title:"Basket engineering — bundles and combos",
+      ask:"Build three combos at a AED "+(Math.round(p.aov*1.6/5)*5)+" price point and feature them for a month",
+      why:"AOV of AED "+p.aov+" across "+p.orders+" weekly orders. Volume is there; margin per order isn't.",
+      impact: Math.round(g*0.14), urgency:2};
+  if(p.contactDays > 40)
+    return {type:"Growth", title:"Re-engage — no commercial ask",
+      ask:"A visit, not a call. Bring their numbers, ask what's not working, ask for nothing.",
+      why:p.contactDays+" days since a substantive conversation. Accounts are lost in the silence.",
+      impact: Math.round(g*0.09), urgency:2};
+  return {type:"Growth", title:"Hold — quarterly business review only",
+    ask:"No intervention this cycle. Book the QBR and re-read in four weeks.",
+    why:"Performing in line with expectations. Manufacturing an action here costs AM time that a struggling account needs more.",
+    impact: 0, urgency:1};
+}
+
+/* ---------- signals & narrative ---------- */
+function signals(p,s){
+  var out=[];
+  if(p.trend>=10) out.push(["pos","Volume up "+p.trend.toFixed(0)+"% over four weeks — sustained, not a single spike."]);
+  if(p.trend<=-10) out.push(["neg","Volume down "+Math.abs(p.trend).toFixed(0)+"% over four weeks."]);
+  if(p.trend>-10&&p.trend<10) out.push(["neu","Volume broadly flat ("+(p.trend>=0?"+":"")+p.trend.toFixed(0)+"%) — within normal weekly variance."]);
+  if(p.cancel>8) out.push(["neg","Cancellation rate "+p.cancel.toFixed(1)+"% — more than double a healthy book."]);
+  else if(p.cancel<2.5) out.push(["pos","Cancellation rate "+p.cancel.toFixed(1)+"% — top decile operationally."]);
+  if(p.ratingDelta<=-0.3) out.push(["neg","Rating fell "+Math.abs(p.ratingDelta).toFixed(1)+" points to "+p.rating.toFixed(1)+"."]);
+  if(p.ratingDelta>=0.2) out.push(["pos","Rating improving, now "+p.rating.toFixed(1)+"."]);
+  if(p.menuDays>75) out.push(["neg","Menu untouched for "+p.menuDays+" days — stale listings and a live cancellation cause."]);
+  if(p.promoDays<=3) out.push(["neu","Only "+p.promoDays+" promo days in the last 30 — marketing lever unused."]);
+  if(p.promoDays>=10) out.push(["pos",p.promoDays+" promo days last month — actively co-marketing with us."]);
+  if(p.contactDays>40) out.push(["neg",p.contactDays+" days since a substantive conversation."]);
+  if(p.aovDelta<=-3) out.push(["neg","Basket down "+Math.abs(p.aovDelta).toFixed(1)+"% — same customers spending less."]);
+  if(p.exclusivity) out.push(["neg","Competitor trial mentioned by the partner. Treat as active displacement risk."]);
+  return out;
+}
+function narrative(p,s,a,rk){
+  var b=band(s.total);
+  var lead;
+  if(b==="Healthy") lead=p.name+" is one of the stronger accounts in the book at "+s.total+"/100.";
+  else if(b==="Watch") lead=p.name+" scores "+s.total+"/100 — nothing broken, but two components are drifting.";
+  else if(b==="At Risk") lead=p.name+" is at "+s.total+"/100 and the direction matters more than the level.";
+  else lead=p.name+" is at "+s.total+"/100 with "+rk.pct+"% modelled churn risk — this is a this-week account.";
+
+  var mid;
+  if(p.trend<=-15) mid=" Weekly GMV has gone from AED "+fmt(p.series[0])+" to AED "+fmt(p.series[11])+" over twelve weeks, and the decline is linear rather than a step drop — which points at a persistent operational cause, not a one-off.";
+  else if(p.trend>=15) mid=" Weekly GMV has climbed from AED "+fmt(p.series[0])+" to AED "+fmt(p.series[11])+", and the growth is compounding rather than promo-driven.";
+  else mid=" Weekly GMV is holding around AED "+fmt(p.series[11])+", which is a ceiling rather than a problem — the upside here has to come from basket or daypart, not from more of the same.";
+
+  var end=" The one thing to do: "+a.title.toLowerCase()+". "+a.why;
+  return lead+mid+end;
+}
+function message(p,s,a){
+  var first=p.name.split(" ")[0];
+  if(a.type==="Retention" && p.exclusivity)
+    return "Hi — I've been through your numbers properly before we talk commission. You're at "+p.cancel.toFixed(1)+"% cancellations since the kitchen changes, and that's what took the rating from "+(p.rating-p.ratingDelta).toFixed(1)+" to "+p.rating.toFixed(1)+". I'd rather fix that than just discount you. Can I come by this week? I'll bring a plan for both branches.";
+  if(a.type==="Retention" && p.trend<-15)
+    return "Hi — I don't want to send you a generic check-in. Your weekly volume is down about "+Math.abs(p.trend).toFixed(0)+"% over the last month and I'd like to understand why before I suggest anything. Are you free for 30 minutes this week? I'll come to you and bring the data.";
+  if(a.type==="Retention")
+    return "Hi — quick one. You're running at "+p.cancel.toFixed(1)+"% cancellations, which is costing you more than it looks: every cancelled order is a customer who doesn't come back. I've got two ideas on peak-hour capacity that don't cost you anything. Ten minutes this week?";
+  if(a.type==="Upsell")
+    return "Hi — good month. You're up "+p.trend.toFixed(0)+"% and running at a "+p.rating.toFixed(1)+" rating, which puts you in the top group in the area. You're only doing "+p.promoDays+" promo days though, so we're leaving demand on the table. I've put together a placement plan — worth 20 minutes?";
+  if(a.aov<40 || p.aov<40)
+    return "Hi — you're doing "+p.orders+" orders a week, which is excellent, but at AED "+p.aov+" a basket the margin is thin for both of us. I've sketched three combos that should lift the ticket without changing your kitchen. Can I send them over?";
+  return "Hi — your menu hasn't changed in "+p.menuDays+" days and a few items on there aren't available any more, which is generating cancellations. We have a free photography slot this month. Want me to book it for you?";
+}
+
+/* ---------- helpers ---------- */
+function fmt(n){ return n.toLocaleString("en-US"); }
+function aed(n){ return "AED "+fmt(Math.round(n)); }
+function spark(series,color){
+  var w=78,h=22,min=Math.min.apply(null,series),max=Math.max.apply(null,series),rg=(max-min)||1;
+  var pts=series.map(function(v,i){
+    return (i*(w/(series.length-1))).toFixed(1)+","+(h-2-((v-min)/rg)*(h-4)).toFixed(1);
+  }).join(" ");
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'"><polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+}
+
+/* ---------- compute ---------- */
+var DATA = PARTNERS.map(function(p){
+  var s=score(p), rk=riskLabel(p,s.total), a=action(p,s.total);
+  return {p:p,s:s,rk:rk,a:a,health:s.total,priority:a.impact*a.urgency};
+});
+
+/* ---------- KPIs + brief ---------- */
+(function(){
+  var totalGMV=DATA.reduce(function(t,d){return t+d.p.gmv},0);
+  var atRisk=DATA.filter(function(d){return d.health<60});
+  var atRiskGMV=atRisk.reduce(function(t,d){return t+d.p.gmv},0);
+  var upsell=DATA.filter(function(d){return d.a.type==="Upsell"});
+  var upsellGMV=upsell.reduce(function(t,d){return t+d.a.impact},0);
+  var avgH=Math.round(DATA.reduce(function(t,d){return t+d.health},0)/DATA.length);
+
+  document.getElementById("kpis").innerHTML=
+    kpi("Portfolio GMV / month",aed(totalGMV),DATA.length+" active restaurant partners","")+
+    kpi("GMV at risk",aed(atRiskGMV),atRisk.length+" partners below 60 health · "+Math.round(atRiskGMV/totalGMV*100)+"% of book","alert")+
+    kpi("Identified upsell value",aed(upsellGMV)+" /mo",upsell.length+" accounts healthy enough to ask","good")+
+    kpi("Average health score",avgH+" / 100",band(avgH)+" band overall","")+
+    kpi("Actions this week",Math.min(5,DATA.length)+"",  "Down from "+DATA.length+" open opportunities","");
+
+  var critical=DATA.filter(function(d){return d.health<40});
+  var stale=DATA.filter(function(d){return d.p.menuDays>60});
+  var lowPromo=DATA.filter(function(d){return d.health>=72&&d.p.promoDays<6});
+  var highCancel=DATA.filter(function(d){return d.p.cancel>7});
+
+  document.getElementById("briefText").innerHTML=
+    "The book is worth <b>"+aed(totalGMV)+"</b> a month across "+DATA.length+" partners, averaging <b>"+avgH+"/100</b> health. "+
+    "<b>"+aed(atRiskGMV)+"</b> ("+Math.round(atRiskGMV/totalGMV*100)+"% of GMV) sits below the 60-point line, concentrated in "+critical.length+" account"+(critical.length===1?"":"s")+" where the risk is displacement rather than performance. "+
+    "The larger and less obvious finding is on the other side: <b>"+lowPromo.length+" healthy accounts</b> are running fewer than six promo days a month, worth roughly <b>"+aed(upsellGMV)+"</b> in monthly upside — more than the at-risk exposure. "+
+    "Two patterns cut across individual books and belong to Ops and Marketing, not to any one AM: <b>"+highCancel.length+" partners are above a 7% cancellation rate</b>, all of them peak-hour capacity rather than demand problems; and <b>"+stale.length+" partners have not updated a menu in over 60 days</b>, several still listing items they no longer serve. Neither is visible from a single AM's accounts.";
+
+  function kpi(l,v,s,cls){
+    return '<div class="kpi '+cls+'"><div class="lab">'+l+'</div><div class="val">'+v+'</div><div class="sub">'+s+'</div></div>';
+  }
+})();
+
+/* ---------- table ---------- */
+var sortKey="health", sortDir=1;
+function render(){
+  var q=document.getElementById("q").value.toLowerCase();
+  var ft=document.getElementById("fTier").value;
+  var fb=document.getElementById("fBand").value;
+  var fa=document.getElementById("fAction").value;
+
+  var rows=DATA.filter(function(d){
+    var hay=(d.p.name+" "+d.p.cuisine+" "+d.p.area+" "+d.p.emirate).toLowerCase();
+    if(q && hay.indexOf(q)<0) return false;
+    if(ft && d.p.tier!==ft) return false;
+    if(fb && band(d.health)!==fb) return false;
+    if(fa && d.a.type!==fa) return false;
+    return true;
+  });
+
+  rows.sort(function(a,b){
+    var x,y;
+    switch(sortKey){
+      case "name": x=a.p.name; y=b.p.name; return x<y?-sortDir:x>y?sortDir:0;
+      case "tier": x=a.p.tier; y=b.p.tier; return x<y?-sortDir:x>y?sortDir:0;
+      case "gmv": x=a.p.gmv; y=b.p.gmv; break;
+      case "trend": x=a.p.trend; y=b.p.trend; break;
+      case "risk": x=a.rk.pct; y=b.rk.pct; break;
+      case "impact": x=a.a.impact; y=b.a.impact; break;
+      default: x=a.health; y=b.health;
+    }
+    return (x-y)*sortDir;
+  });
+
+  document.getElementById("count").textContent=rows.length+" of "+DATA.length+" partners";
+  document.getElementById("rows").innerHTML=rows.map(function(d){
+    var col=bandColor(d.health);
+    var tcls=d.p.trend>2?"up":d.p.trend<-2?"down":"flat";
+    var tsym=d.p.trend>2?"▲":d.p.trend<-2?"▼":"—";
+    return '<tr data-id="'+d.p.id+'">'+
+      '<td><div class="pname">'+d.p.name+'</div><div class="pmeta">'+d.p.cuisine+' · '+d.p.area+', '+d.p.emirate+'</div></td>'+
+      '<td class="hide-sm"><span class="pill p-tier">'+d.p.tier+'</span></td>'+
+      '<td><b>'+aed(d.p.gmv)+'</b></td>'+
+      '<td><span class="delta '+tcls+'">'+tsym+' '+(d.p.trend>=0?"+":"")+d.p.trend.toFixed(1)+'%</span></td>'+
+      '<td class="hide-sm">'+spark(d.p.series,col)+'</td>'+
+      '<td><div class="scorecell"><div class="bar"><i style="width:'+d.health+'%;background:'+col+'"></i></div><span class="scorenum">'+d.health+'</span></div>'+
+        '<span class="pill p-'+band(d.health).toLowerCase().replace(" ","")+'" style="margin-top:4px">'+band(d.health)+'</span></td>'+
+      '<td><b>'+d.rk.pct+'%</b><div class="pmeta">'+d.rk.label+'</div></td>'+
+      '<td class="actioncell"><span class="pill p-'+d.a.type.toLowerCase()+'">'+d.a.type+'</span>'+
+        '<div class="t">'+d.a.title+'</div>'+
+        '<div class="i">'+(d.a.impact>0?"~"+aed(d.a.impact)+"/mo at stake":"No action this cycle")+'</div></td>'+
+    '</tr>';
+  }).join("");
+}
+
+/* map "At Risk" -> class p-risk */
+(function patch(){
+  var orig=band;
+})();
+
+document.getElementById("rows").addEventListener("click",function(e){
+  var tr=e.target.closest("tr"); if(!tr) return;
+  openDrawer(+tr.getAttribute("data-id"));
+});
+["q","fTier","fBand","fAction"].forEach(function(id){
+  document.getElementById(id).addEventListener("input",render);
+  document.getElementById(id).addEventListener("change",render);
+});
+Array.prototype.forEach.call(document.querySelectorAll("th[data-sort]"),function(th){
+  th.addEventListener("click",function(){
+    var k=th.getAttribute("data-sort");
+    if(sortKey===k) sortDir*=-1; else {sortKey=k; sortDir=(k==="name"||k==="tier")?1:-1;}
+    Array.prototype.forEach.call(document.querySelectorAll("th[data-sort]"),function(t){t.classList.remove("sorted")});
+    th.classList.add("sorted");
+    render();
+  });
+});
+
+/* ---------- drawer ---------- */
+function openDrawer(id){
+  var d=DATA.filter(function(x){return x.p.id===id})[0]; if(!d) return;
+  var p=d.p,s=d.s,a=d.a,rk=d.rk,col=bandColor(d.health);
+  document.getElementById("dName").textContent=p.name;
+  document.getElementById("dSub").textContent=p.cuisine+" · "+p.area+", "+p.emirate+" · "+p.tier+" tier · "+p.commission.toFixed(1)+"% commission";
+
+  var parts=[["Volume trend",s.parts.volume,25],["Ops reliability",s.parts.ops,20],["Customer rating",s.parts.rating,15],
+             ["Basket trend",s.parts.basket,10],["Menu freshness",s.parts.menu,10],["Marketing",s.parts.marketing,10],["Relationship",s.parts.relation,10]];
+
+  document.getElementById("dBody").innerHTML=
+    '<div class="sect"><div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">'+
+      '<div><div style="font-size:40px;font-weight:800;letter-spacing:-1.5px;line-height:1;color:'+col+'">'+d.health+'<span style="font-size:16px;color:#6b7885;font-weight:600">/100</span></div>'+
+      '<span class="pill p-'+band(d.health).toLowerCase().replace(" ","")+'" style="margin-top:6px;display:inline-block">'+band(d.health)+'</span></div>'+
+      '<div style="border-left:1px solid #e3e8ed;padding-left:14px"><div style="font-size:11px;color:#6b7885;text-transform:uppercase;letter-spacing:.05em;font-weight:600">Modelled churn risk</div>'+
+      '<div style="font-size:22px;font-weight:700;color:'+(rk.pct>=45?"#d9534f":"#101820")+'">'+rk.pct+'% <span style="font-size:12px;color:#6b7885;font-weight:600">'+rk.label+'</span></div></div>'+
+      '<div style="margin-left:auto">'+spark(p.series,col)+'<div style="font-size:11px;color:#6b7885;text-align:right">12-wk GMV</div></div>'+
+    '</div></div>'+
+
+    '<div class="sect"><h5>Key metrics</h5><div class="metricgrid">'+
+      m("Monthly GMV",aed(p.gmv))+m("Orders / week",fmt(p.orders))+m("Avg basket","AED "+p.aov)+
+      m("Cancellation",p.cancel.toFixed(1)+"%")+m("Rating",p.rating.toFixed(1)+" "+(p.ratingDelta>0?"▲":p.ratingDelta<0?"▼":"—"))+m("Prep SLA",p.prep+"%")+
+      m("Menu age",p.menuDays+" days")+m("Promo days /30",p.promoDays+"")+m("Last contact",p.contactDays+" days")+
+    '</div></div>'+
+
+    '<div class="sect"><h5>Score breakdown</h5><div class="breakdown">'+
+      parts.map(function(x){
+        return '<div><span class="bl">'+x[0]+'</span><span class="bb"><i style="width:'+(x[1]/x[2]*100)+'%"></i></span><span class="bv">'+x[1].toFixed(1)+' / '+x[2]+'</span></div>';
+      }).join("")+
+    '</div></div>'+
+
+    '<div class="sect"><h5>AI summary</h5><div class="narrative">'+narrative(p,s,a,rk)+'</div></div>'+
+
+    '<div class="sect"><h5>Signals detected</h5>'+
+      signals(p,d.health).map(function(sg){
+        var c=sg[0]==="pos"?"#28a745":sg[0]==="neg"?"#d9534f":"#b9c2cb";
+        return '<div class="signal"><span class="dot" style="background:'+c+'"></span><span>'+sg[1]+'</span></div>';
+      }).join("")+
+    '</div>'+
+
+    '<div class="sect"><h5>Recommended next action</h5>'+
+      '<div style="background:#fff;border:1px solid #e3e8ed;border-left:3px solid '+(a.type==="Retention"?"#d9534f":a.type==="Upsell"?"#2f6fb0":"#6b57c9")+';border-radius:8px;padding:14px 16px">'+
+      '<span class="pill p-'+a.type.toLowerCase()+'">'+a.type+'</span>'+
+      '<div style="font-weight:650;font-size:14.5px;margin-top:7px">'+a.title+'</div>'+
+      '<div style="font-size:12.5px;color:#2c3742;margin-top:7px"><b>The ask:</b> '+a.ask+'</div>'+
+      '<div style="font-size:12.5px;color:#6b7885;margin-top:6px"><b>Why now:</b> '+a.why+'</div>'+
+      (a.impact>0?'<div style="font-size:12.5px;font-weight:700;color:#1e7e34;margin-top:9px">Value at stake: ~'+aed(a.impact)+' / month</div>':'')+
+      '</div></div>'+
+
+    '<div class="sect"><h5>Draft outreach — review before sending</h5>'+
+      '<div class="msgbox" id="msgtext">'+message(p,s,a)+'</div>'+
+      '<button class="copybtn" id="copyBtn">Copy message</button></div>'+
+
+    '<div class="sect"><h5>Latest AM notes (model input)</h5>'+
+      '<div style="font-size:12.5px;color:#6b7885;font-style:italic;border-left:2px solid #e3e8ed;padding-left:12px">'+p.note+'</div></div>';
+
+  function m(l,v){ return '<div class="m"><div class="l">'+l+'</div><div class="v">'+v+'</div></div>'; }
+
+  var cb=document.getElementById("copyBtn");
+  if(cb) cb.addEventListener("click",function(){
+    var t=document.getElementById("msgtext").textContent;
+    if(navigator.clipboard) navigator.clipboard.writeText(t);
+    cb.textContent="Copied"; setTimeout(function(){cb.textContent="Copy message";},1400);
+  });
+
+  document.getElementById("drawer").classList.add("on");
+  document.getElementById("scrim").classList.add("on");
+}
+function closeDrawer(){
+  document.getElementById("drawer").classList.remove("on");
+  document.getElementById("scrim").classList.remove("on");
+}
+document.getElementById("dClose").addEventListener("click",closeDrawer);
+document.getElementById("scrim").addEventListener("click",closeDrawer);
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeDrawer(); });
+
+/* ---------- queue ---------- */
+(function(){
+  var ranked=DATA.filter(function(d){return d.a.impact>0}).sort(function(a,b){return b.priority-a.priority}).slice(0,5);
+  document.getElementById("queueList").innerHTML=ranked.map(function(d,i){
+    return '<div class="qcard '+d.a.type+'">'+
+      '<div class="qhead"><h4><span class="rank">'+(i+1)+'</span>'+d.p.name+' <span class="pill p-'+d.a.type.toLowerCase()+'">'+d.a.type+'</span></h4>'+
+      '<div class="qimpact">~'+aed(d.a.impact)+' / month at stake</div></div>'+
+      '<div class="qbody"><b>'+d.a.title+'.</b> '+d.a.ask+'.</div>'+
+      '<div class="qwhy">'+d.a.why+'</div>'+
+      '<div class="qwhy" style="margin-top:8px;color:#101820"><b>Success measure in 2 weeks:</b> '+
+        (d.a.type==="Retention" ? (d.p.cancel>7 ? "cancellation rate below 5%" : "weekly GMV stops declining — flat is a win") :
+         d.a.type==="Upsell" ? "promo days booked and first campaign live" : "menu updated and basket size up 5%")+
+      '</div>'+
+      '<div class="qwhy" style="margin-top:4px">Health '+d.health+'/100 · churn risk '+d.rk.pct+'% · '+aed(d.p.gmv)+' monthly GMV · '+d.p.tier+'</div>'+
+    '</div>';
+  }).join("")+
+  '<div class="qcard" style="border-left-color:#101820;background:#fafbfc">'+
+    '<div class="qbody"><b>Escalate, don\'t action:</b> four partners are above a 7% cancellation rate and every one of them is a peak-hour capacity problem, not a demand problem. No individual AM sees this from their own book. This belongs in a conversation with Ops about throttling and prep-time settings, not in five separate partner calls.</div>'+
+  '</div>';
+})();
+
+/* ---------- tabs & dates ---------- */
+Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"),function(b){
+  b.addEventListener("click",function(){
+    Array.prototype.forEach.call(document.querySelectorAll("nav.tabs button"),function(x){x.classList.remove("on")});
+    Array.prototype.forEach.call(document.querySelectorAll(".panel"),function(x){x.classList.remove("on")});
+    b.classList.add("on");
+    document.getElementById(b.getAttribute("data-tab")).classList.add("on");
+    window.scrollTo(0,0);
+  });
+});
+var d=new Date();
+var opt={day:"numeric",month:"short",year:"numeric"};
+document.getElementById("asof").textContent=d.toLocaleDateString("en-GB",opt);
+document.getElementById("weekOf").textContent=d.toLocaleDateString("en-GB",{day:"numeric",month:"long"});
+
+render();
+})();
+</script>
+</body>
+</html>
